@@ -1,0 +1,4 @@
+name = Utils
+description = General utilities that can be used by any module.
+package = Utilities
+core = 6.x

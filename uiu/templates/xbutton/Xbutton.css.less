@@ -1,0 +1,23 @@
+.xbutton{
+  background-image: url("x_icon_white.png");
+  width: 1.4em;
+  height: 1.3em;
+  margin: 0.4em;
+  background-repeat: no-repeat;
+  background-color: rgba(255,255,255,0);
+  border: none;
+  background-size: contain;
+  cursor: pointer;
+}
+
+.xbutton:hover{
+  background-image: url("x_icon_black.png");
+}
+
+.xbutton:after{
+    content: " ";
+    display: block;
+    height: 0;
+    clear: both;
+    /**zoom: expression( this.runtimeStyle['zoom'] = '1', this.innerHTML += '<div class="ie7-clear"></div>' );*/
+}

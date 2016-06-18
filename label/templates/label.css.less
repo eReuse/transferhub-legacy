@@ -1,0 +1,54 @@
+.label{
+  display:inline-block;
+  position: relative;
+  background-color: #ffffff;
+  *:not(.label_text *){
+    line-height: 1em;
+  }
+  & > div {
+    line-height: 1;
+    width: 100%;
+    img {
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+    }
+    &:first-child {
+      height: 47%;
+      .logo {
+        height: 100%;
+        width: 100%;
+        text-align: center;
+      }
+    }
+    &:last-child {
+      height: 53%;
+      & > * {
+        display: inline-block;
+        vertical-align: middle;
+        &.qr{
+          width: 35%;
+          height: 100%;
+        }
+        &.label_text{
+          width: 60%;
+          padding-left: 3%;
+          line-height: 1.5em;
+          vertical-align: middle;
+          font-size: 17px;
+          .title:after {
+            content: ': ';
+          }
+          .text {
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
+}
+#labelPersonalize{
+  .form-item{display: inline-block !important}
+  .line select{width: 8em}
+}

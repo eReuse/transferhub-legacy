@@ -1,0 +1,39 @@
+.sbutton{
+  position: relative;
+  border-radius: @borderRadiusSmall;
+  color: @black;
+  text-decoration: none;
+  cursor: pointer;
+  line-height: 2.5em;
+  padding-left: 2em;
+  padding-right: 2em;
+  border: none;
+  font-size: 1.15em;
+  text-align: center;
+  white-space: nowrap;
+}
+.sbutton.normal{
+  background-color: @normalColor;
+  border-color: @normalColor;
+}
+.sbutton.bold, .sbutton.form-submit{
+  color: @white;
+  background-color: @boldColor;
+  border-color: @boldColor;
+}
+.sbutton.emphasis{
+  color: @white;
+  background-color: @emphasisColor;
+  border-color: @emphasisColor;
+}
+
+.sbutton:hover{
+  top: -1px;
+  box-shadow: @shadow;
+  text-decoration: none;
+}
+.sbutton:active{
+  text-decoration: none;
+  box-shadow: @insetShadow;
+  top: 0;
+}

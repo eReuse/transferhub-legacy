@@ -1,0 +1,5 @@
+name = Label Personalize
+description = Let the user personalize a label
+package = Label
+core = 6.x
+dependencies[] = label

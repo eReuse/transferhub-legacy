@@ -1,0 +1,122 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 06/04/2015
+ * Time: 12:29
+ */
+
+
+function socialActionsVote_init(){
+    $path = drupal_get_path('module','socialActionsVote');
+    drupal_add_css($path.'/socialActionsVoteBig.css.less');
+    drupal_add_css($path.'/socialActionsVote.css.less');
+    drupal_add_js($path.'/socialActionsVote.js');
+    drupal_add_js($path.'/socialActionsVoteBig.js');
+    drupal_add_js($path.'/socialActionsVoteBigView.js');
+    //drupal_add_js($path.'/socialActionsVotePopups.js');
+  //  drupal_add_js($path.'/init.js');
+    //drupal_add_js($path.'/socialActionsVoteSmall.js');
+}
+
+/**
+ * Implements hook_block().
+ */
+function socialActionsVote_block($op = 'list', $delta = 0, $edit = array()){
+    switch($op){
+        case 'list':
+            return Array(
+                'socialActionsVote_big' => Array(
+                    'info' => 'Voting for socialActions. Big format.',
+                    'cache' =>  BLOCK_NO_CACHE
+                ),
+                'socialActionsVote_big_view' => Array(
+                    'info' => 'See the votes of the actual menu item. Big format.',
+                    'cache' => BLOCK_NO_CACHE
+                )
+            );
+        case 'view':
+            switch($delta){
+                case 'socialActionsVote_big':
+                    return Array('subject'=>t('Vote'), 'content'=>theme('socialActionsVote_big'));
+                case 'socialActionsVote_big_view':
+                    return Array('subject'=>t('Votes'), 'content'=>theme('socialActionsVote_big_view'));
+            }
+    }
+}
+
+function socialActionsVote_theme($existing, $type, $theme, $path){
+    return Array(
+        'socialActionsVote_big' => Array(),
+        'socialActionsVote_small' => Array(
+            'arguments' => Array('int' => null),
+        ),
+        'socialActionsVote_big_view' => Array(),
+        'socialActionsVote_big_voter' => Array(),
+        'socialActionsVote_small_voter' => Array()
+    );
+}
+
+function theme_socialActionsVote_big_view(){
+    $node = menu_get_object();
+    $attributes = drupal_attributes(Array('class'=>'votes', 'data-nid'=>$node->nid));
+    $html = "<strong $attributes></strong>&nbsp;";
+    $html .= '<span class="text"></span>';
+    return $html;
+}
+
+function theme_socialActionsVote_big(){
+    $node = menu_get_object();
+    return socialActionsVote_theme_common('big',$node->nid);
+
+}
+
+function theme_socialActionsVote_small($nid){
+    return socialActionsVote_theme_common('small',$nid);
+}
+
+function socialActionsVote_theme_common($type,$nid){
+    global $user;
+    drupal_add_js(Array('uid' => $user->uid == 0? null : $user->uid,'setting'));
+    $site_name = variable_get('site_name', '');
+    $container = '<article '.drupal_attributes(Array('class'=>'socialActionsVote','data-nid'=>$nid,'data-type'=>$type)).'>';
+    $container .= '<div class="content">';
+    $container .=
+        '<div class="already_voted">'
+            .t('You have already voted. Thanks!')
+            .'<p>'. t('To vote again, go to !fb, logout and refresh this page.', Array('!fb' => 'Facebook')) .'</p>'
+        .'</div>';
+    $container .= theme('socialActionsVote_big_voter');
+    $container .= '<div class="loading"><progress>Loading...</progress></div>';
+    $container .= '</div>';
+    $container .= '<div class="popups">'._socialActionsVote_get_popups($type,$nid).'</div>';
+    return $container.'</article>';
+}
+
+function _socialActionsVote_get_popups($type,$nid){
+    $html = '';
+    $popup_id = $type.'_'.$nid.'_';
+    $site_name = variable_get('site_name', '');
+    if($type == 'small') $html .= theme('popup',$popup_id.'small_voter',theme('socialActionsVote_small_voter'),UI_THEME_TYPE::NORMAL,null,Array('buttons' => Array('defaults' => Array('cross' => true))), Array(), UI_FLOATING_ARROW::UP);
+    else{
+        $html .= theme('popup',$popup_id.'suggestion_facebook',t('Vote using your !fb account.', Array('!fb' => $site_name)),UI_THEME_TYPE::NORMAL,null,Array('buttons' => Array('defaults' => Array('cross' => true))), Array(), UI_FLOATING_ARROW::UP);
+        $html .= theme('popup',$popup_id.'suggestion_user',t("Vote using your !site account.", Array('!site' => $site_name)),UI_THEME_TYPE::NORMAL,null,Array('buttons' => Array('defaults' => Array('cross' => true))), Array(), UI_FLOATING_ARROW::UP);
+    }
+    $html .= theme('popup',$popup_id.'error','<div class="message"></div>',UI_THEME_TYPE::BOLD,null,Array('buttons' => Array('defaults' => Array('cross' => true))), Array(), UI_FLOATING_ARROW::UP);
+    return $html;
+}
+
+function theme_socialActionsVote_big_voter(){
+    $vote_f = t('Vote using Facebook');
+    $vote_w = t('Vote using !s',Array('!s' => variable_get('site_name','')));
+    return '<div id="big_voter" class="voter">'.theme('sbutton','facebook_voter').'</div>';
+   // return '<div class="big_voter">'.theme_image('img/facebook.png',$vote_f,$vote_f,Array('class' => 'facebook'))
+     //   .theme('image','img/website.png',$vote_w,$vote_w,Array('class' => 'website')).'</div>';
+}
+
+function theme_socialActionsVote_small_voter(){
+    $vote_f = t('Vote using Facebook');
+    $vote_w = t('Vote using !s',Array('!s' => variable_get('site_name','')));
+    return '<div class="small_voter">'.theme_image('img/facebook_small.png',$vote_f,$vote_f,Array('class' => 'facebook'))
+    .theme('image','img/website_small.png',$vote_w,$vote_w,Array('class' => 'website')).'</div>';
+}

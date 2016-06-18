@@ -1,0 +1,253 @@
+<?php
+/**
+ * @file labelPresets.module
+ *
+ * Let's the user have presets for the lavel. This is, getting and saving the way the labels are showed.
+ *
+ * There is one preset by default. This is, the default preset all users have.
+ */
+
+
+/**
+ * Implements hook_node_operations().
+ */
+define('LABEL_PRESETS_URL', 'user/%user/labelPresets');
+define('LABEL_PRESETS_URL_SPECIFIC', LABEL_PRESETS_URL.'/%labelPreset');
+define('LABEL_PRESETS_USE_PRESETS', 'use presets');
+define('LABEL_PRESETS_DEFAULT', 'default');
+define('LABEL_LOGO_ANDROMINES', 'andromines.png' );
+define('LABEL_LOGO_DEFAULT','default.png');
+//global $ANDROMINES_USER;
+//$ANDROMINES_USER = Array(3129, 2434, 2943);
+/**
+ * Implements hook_menu().
+ */
+function labelPresets_menu(){
+    return Array(
+        LABEL_PRESETS_URL => Array(
+            'title' => 'Operates with the label presets of an user',
+            'access arguments' => Array(LABEL_PRESETS_USE_PRESETS), //No need for a special access rather than this one
+            'page arguments' => Array(1), //We get '%user'
+            'page callback' => 'labelPresets_user_presets',
+            'file' => 'user_presets.inc',
+            'type' => MENU_CALLBACK
+        ),
+        LABEL_PRESETS_URL_SPECIFIC => Array(
+            'title' => 'Operates with an specific label preset of an user',
+            'load arguments' => Array(1),   //For our labelPresets_load we give too the '%user'
+            'access arguments' => Array(LABEL_PRESETS_USE_PRESETS),
+            'file' => 'specific.inc',
+            'page arguments' => Array(1,3), //We get '%user' and '%labelPreset'
+            'page callback' => 'labelPresets_user_presets_specific',
+            'type' => MENU_CALLBACK
+        )
+    );
+}
+
+/**
+ * Load method for menu's %labelPreset
+ * @see labelPresets_menu LABEL_PRESETS_URL_SPECIFIC configuration
+ */
+function labelPreset_load($labelPreset_name,$arguments = Array()){
+    $uid = $arguments[0];   //todo not sure if uid has already been proved that is an user
+    try{
+        return labelPresets_getPreset($uid,$labelPreset_name);
+    }catch (Exception $e){
+        return false;
+    }
+}
+
+/**
+ * Implementation of hook_perm()
+ * - Let's the user use and save presets.
+ * todo add own presets for users that just can see their own presets
+ */
+function labelPresets_perm(){
+    return Array(
+        LABEL_PRESETS_USE_PRESETS,
+    );
+}
+
+/**
+ * Given a user, gets it's presets.
+ *
+ * This function doesn't check for permissions and is going to give the user, at least, the default preset.
+ *
+ * @param int $uid
+ * @return array Presets: [preset_name] = values as labelPresets_getPreset.
+ * @throws Exception Doesn't throw it. It makes sure
+ */
+function labelPresets_getPresets($uid){
+    global $ANDROMINES_USER;
+    $presets = Array();
+   // if(in_array($uid,$ANDROMINES_USER))
+    if ($_SERVER['SERVER_NAME'] == 'andromines.ereuse.org')
+        $presets['configuracio1'] = labelPresets_getPreset($uid,'configuracio1');
+    $presets[LABEL_PRESETS_DEFAULT] = labelPresets_getPreset($uid,'default');
+    return $presets;
+}
+
+/**
+ * @param int $uid
+ * @param string $preset_name
+ * @return array Preset array:
+ * - 'logo': String. Path of the logo
+ * - 'style': String. CSS style
+ * - 'size': array
+ *  - 'width': int. Relative width of the label in px
+ *  - 'height': int. Relative height of the label in px
+ * - 'spacing': array
+ *  - 'horizontal': int. Absolute horizontal spacing of the label in px
+ *  - 'vertical': int. Absolute vertical spacing of the label in px
+ * - 'lines': array
+ *  - name_of_a_node_field: user_friendly_name_the_preset_has_stored
+ * @throws Exception The preset doesn't exist or is not available for the user.
+ */
+function labelPresets_getPreset($uid,$preset_name = LABEL_PRESETS_DEFAULT){
+    //global $ANDROMINES_USER;
+    //if(in_array($uid,$ANDROMINES_USER) && $preset_name == 'configuracio1'){
+    if($_SERVER['SERVER_NAME'] == 'andromines.ereuse.org' && $preset_name == 'configuracio1'){
+        return Array(
+            'logo'=> file_directory_path().'/'.LABEL_FILE_PATH.'/'.LABEL_LOGO_ANDROMINES,
+            'style' => 'font-size: 12px;',
+            'size' => Array(
+                'width' => 96,
+                'height' => 57,
+            ),
+            'space' => Array(
+                'horizontal' => 0,
+                'vertical' => 0,
+            ),
+            'lines' => Array(
+                'field_id' => Array(
+                    'title' => '',
+                    'position' => 0,
+                ),
+                'field_id_donant' => Array(
+                    'title' => 'ID',
+                    'position' => 1,
+                ),
+                'field_id_2' => Array(
+                    'title' => 'ordinador',
+                    'position' => 2,
+                ),
+                'nid' => Array(
+                    'title' => 'XSR',
+                    'position' => 3,
+                ),
+            )
+        );
+    }
+    else if($preset_name == LABEL_PRESETS_DEFAULT){
+        return Array(
+            'logo' => file_directory_path().'/'.LABEL_FILE_PATH.'/'.LABEL_LOGO_DEFAULT,
+            'style' => 'font-size: 12px;',
+            'size' => Array(
+                'width' => 86,
+                'height' => 55,
+            ),
+            'space' => Array(
+                'horizontal' => 1,
+                'vertical' => 2,
+            ),
+            'lines' => Array(   //Implicit array order
+                'field_id' => Array(
+                    'title' => 'S/N',
+                    'position' => 0,
+                ),
+                'field_id_donant' => Array(
+                    'title' => 'ID donant',
+                    'position' => 1,
+                ),
+                'field_label' => Array(
+                    'title' => 'Etiqueta',
+                    'position' => 3,
+                ),
+                'nid' => Array(
+                    'title' => 'Reutilitza.cat',
+                    'position' => 2,
+                ),
+            )
+        );
+    }
+    else throw new Exception('The preset doesn\'t exist or is not available for the user.');
+}
+
+
+/**
+ * Stores a new preset. Under construction.
+ * @param $preset_name
+ * @param $uid
+ * @param $logo
+ * @param array $attributes
+ * @param $lines
+ * @throws Exception
+ */
+function labelPresets_create($preset_name,
+                                   $uid,$logo,
+                                   $attributes = Array('width' => 'auto', 'height' => 'auto', 'style' => 'font-size:inherit;'),
+                                   $lines){
+    //todo save a preset
+    if(false) throw new Exception(t('It already exists'));
+}
+
+/**
+ * Gets and formats the values of a node accordingly the preset_lines.
+ * @param $preset_lines Array 'lines' subArray of a preset Array.
+ * @param $node Node
+ * @return array A 'lines' Array ready to use in theme('label')
+ */
+function labelPresets_getValuesFromNode($preset_lines,$node){
+    $info = Array();
+    $i = 0;
+    foreach(label_get_line_fields() as $field_name => $title){
+        $value = $node->$field_name;
+        $in_preset = is_array($preset_lines[$field_name]);
+        $info[$field_name] = Array(
+            'title' => $in_preset? $preset_lines[$field_name]['title'] : $title,
+            'value' => is_array($value)? $value[0]["value"] : $value, //todo do for all fields?
+            'position' => $in_preset? $preset_lines[$field_name]['position'] : null,
+            'visible' => $in_preset,
+            'set_in_attr' => true
+        );
+    }
+    return $info;
+}
+
+/**
+ * Gets a selector of presets the user can choose.
+ *
+ * If the user cannot use custom presets this field will appear disabled.
+ * This select has a custom validation, so no permission's user can fool it.
+ *
+ * @param int $uid
+ * @return array Select element as FAPI
+ */
+function labelPresets_get_form_selector($uid){
+    $preset_names = array_keys(labelPresets_getPresets($uid));
+    return Array(
+        '#type' => 'select',
+        '#title' => t('Preset'),
+        '#description' => t('Select one of the presets.'),
+        '#options' => array_combine($preset_names,$preset_names),
+        '#disabled' => !user_access(LABEL_PRESETS_USE_PRESETS),
+        '#element_validate' => Array('labelPresets_validate_form_selector')
+    );
+}
+
+/**
+ * Validates the selection of the labelPresets_get_form_selector.
+ * @param $element
+ * @param $form_state
+ */
+function labelPresets_validate_form_selector($element, &$form_state){
+    if(!user_access(LABEL_PRESETS_USE_PRESETS) && $element['#value'] != LABEL_PRESETS_DEFAULT)
+        form_error($element,'You just can choose the default preset.');
+    //todo user cannot choose another's preset.
+}
+
+function labelPersets_new_preset_form(){
+    //$output = theme('textfield',Array('#title' => t('(Optional) Save as a preset'),))
+    //$output .= theme('sbutton', 'save_preset', t('Save preset'),)
+    throw new Exception('Needs to be programmed');
+}

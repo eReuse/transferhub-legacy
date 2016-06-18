@@ -1,0 +1,6 @@
+name = User Interface Utils
+description = General UI theme methods and constants to use with themes and modules. This module implements XSR3 CSS variables.
+package = User interface
+core = 6.x
+dependencies[] = less
+dependencies[] = libraries

@@ -1,0 +1,76 @@
+<?php
+define('LABEL_LABEL_NODES', 'label nodes');
+define('LABEL_FILE_PATH', 'label');
+define('LABEL_QR_TEMP_PATH', 'qr');
+
+/**
+ * Implements hook_init().
+ */
+function label_init(){
+    drupal_add_css(drupal_get_path('module','label').'/templates/label.css.less');
+}
+
+/**
+ * Implementation of hook_theme
+ * - label: Generate a qr label that points to the given node. Params:
+ *   - nid: Integer. Node id
+ *   - logo: String. Path of the logo to load.
+ *   - attributes: Array of attributes to add at the label. We expect (can be null though):
+ *          - width
+ *          - height
+ *          - font_size
+ *   - lines: Array of with key valued title and:
+ *          - text that will be displayed
+ *          - If is going to be displayed
+ */
+function label_theme($existing, $type, $theme, $path){
+    return Array(
+      'label' => Array(
+          'arguments' => Array('nid' => null, 'logo' => null, 'style' => '', 'size' => Array('width' => 'auto', 'height' => 'auto'), 'space' => Array('horizontal' => 0, 'vertical' => 0), 'lines' => Array()),
+          'file' => $path.'/templates/label.inc',
+          'template' => 'templates/label'
+      ),
+        'qr' => Array(
+            'arguments' => Array('nid' => null),
+            'file' => $path.'/templates/qr.inc',
+        ),
+    );
+}
+
+/**
+ * Implements hook_perm().
+ * - Personalize labels: let the user personalize a label and save custom modifications
+ * - Label nodes: let's the user label a node.
+ */
+function label_perm(){
+    return Array(
+        LABEL_LABEL_NODES,
+    );
+}
+
+/**
+ * Gets the fields user can choose to put on any line.
+ * @return array
+ */
+function label_get_line_fields(){
+    return Array(
+        "field_id" => t("General ID"),
+        "field_id_donant" => t("Donor's ID"),
+        "field_id_2" => t("Secondary ID (ID_2)"),
+        "nid" => t("ID used by XSR (Drupal)"),
+        "field_label" => t("ID of the label")
+    );
+}
+
+/**
+ * Implements hook_flush_caches().
+ */
+function label_flush_caches(){
+    require_once(_label_get_qr_lib_uri());
+    QRtools::buildCache();
+}
+
+function _label_get_qr_lib_uri(){
+    $folder_path = libraries_get_path('phpqrcode');
+    return $folder_path.'/qrlib.php';
+}

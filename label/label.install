@@ -1,0 +1,11 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 15/03/2015
+ * Time: 11:53
+ */
+
+function label_install(){
+    file_create_path(file_directory_path().'/'.LABEL_FILE_PATH.'/'.LABEL_QR_TEMP_PATH);
+}

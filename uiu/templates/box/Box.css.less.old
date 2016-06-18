@@ -1,0 +1,35 @@
+.box{
+  border-radius: @borderRadius;
+  font-weight: lighter;
+  margin-left: 45px;
+  margin-right: 45px;
+  padding: 1em 2em 2em 2em;
+
+  h1,h2,h3,h4,h5,h6{
+    margin: 0;
+  }
+
+}
+
+.box.normal{
+  background-color: @normalColor;
+  color: @black;
+}
+
+.box.bold{
+  background-color: @boldColor;
+  color: @white;
+
+  h2,h3,h4,h5,h6{
+    border-color: @white !important;
+  }
+}
+
+.box.emphasis{
+  background-color: @emphasisColor;
+  color: @white;
+
+  h2,h3,h4,h5,h6{
+    border-color: @white !important;
+  }
+}

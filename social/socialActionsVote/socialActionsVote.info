@@ -1,0 +1,4 @@
+name = Social Actions Vote
+description = Provides a block where user can vote using Facebook App or Drupal user
+package = Social
+core = 6.x

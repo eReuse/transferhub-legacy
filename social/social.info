@@ -1,0 +1,4 @@
+name = Social
+description = Base module to configure and work with social stuff
+package = Social
+core = 6.x

@@ -1,0 +1,18 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 05/04/2015
+ * Time: 22:08
+ */
+
+function social_init(){
+    drupal_add_js(drupal_get_path('module','social') . '/socialFacebook.js');
+    global $user;
+    drupal_add_js(Array('social' =>
+        Array(
+            'userIsAnonymous' => user_is_anonymous(),
+            'uid' => intval($user->uid)),
+            'siteName' => variable_get('sitename','')
+    ),'setting');
+}

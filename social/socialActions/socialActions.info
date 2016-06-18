@@ -1,0 +1,4 @@
+name = Social Actions
+description = Framework with REST gateway to preform and retireve social actions.
+package = Social
+core = 6.x

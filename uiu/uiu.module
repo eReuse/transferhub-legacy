@@ -1,0 +1,234 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 26/12/2014
+ * Time: 13:11
+ *
+ *
+ * WARNING: This module touches code in the less module! (Maybe some pony die for this) It is necessary to get global vars.
+ */
+
+require_once 'blocks/login/login.inc';
+require_once 'blocks/user_buttons.inc';
+
+/**
+ * Enum UI_THEME_TYPE
+ *
+ * Describes the different styles an element can have, depending on the effect they want to cause to the user:
+ * - NORMAL is the regular and default one, uses the default schema of colors.
+ * - BOLD is used when the element is very important and it is wanted to be shown above the others.
+ * - EMPHASIS is used when the element is special from the others and it is wanted to catch user's attention, but without
+ * disturbing as much as BOLD.
+ */
+abstract class UI_THEME_TYPE{
+    const NORMAL = ' normal';
+    const BOLD = ' bold';
+    const EMPHASIS = ' emphasis';
+}
+
+abstract class UI_FLOATING_ARROW{
+    const UP = 'up';
+    const DOWN = 'down';
+    const LEFT = 'left';
+    const RIGHT = 'right';
+    const NONE = 'none';
+}
+
+function uiu_views_api(){
+    return array('api' => 3.0);
+}
+
+require_once('views/box_view/box-view.inc');
+
+/**
+ * Implementation of hook_theme()
+ *
+ * See the respective .inc files in templates, theme_functions and views subfolders (of this module) to know what these themes do.
+ */
+function uiu_theme($existing, $type, $theme, $path){
+    return Array(
+        'sbutton' => Array(
+            'arguments' => Array('identity' => null, 'text' => null, 'image' => null, 'behaviour'=>null, 'type'=> UI_THEME_TYPE::BOLD, 'attributes'=>Array()),
+            'file' => $path.'/templates/sbutton/sbutton.inc',
+            'template' => 'templates/sbutton/sbutton'
+        ),
+        'box' => Array(
+            'arguments' => Array('element' => '', 'type' => UI_THEME_TYPE::NORMAL, 'link_box' => false, 'tag'=>'div', 'attributes'=> Array()),
+            'file' => $path.'/templates/box/box.inc',
+            'template' => 'templates/box/box'
+        ),
+        'box_view' => Array(
+            'arguments' => Array('form'=>null),
+          //  'file' => $path.'/views/box_view/box-view.inc', todo If theme is used by a view, the view doesn't load 'file' when in cache.
+            'template' => $path.'/views/box_view/box-view'
+        ),
+        'floating' => Array(
+            'arguments' => Array('identity'=>'', 'element' => '', 'type' => UI_THEME_TYPE::NORMAL, 'attributes' => Array(), 'arrow' => UI_FLOATING_ARROW::NONE),
+            'file' => $path.'/theme_functions/floating/floating.inc'
+        ),
+        'popup' => Array(
+            'arguments' => Array('identity'=>'', 'element' => '', 'type' => UI_THEME_TYPE::NORMAL, 'title' => '', 'options'=>Array(), 'attributes' => Array(), 'arrow' => UI_FLOATING_ARROW::NONE),
+            'file' => $path.'/theme_functions/popup/popup.inc'
+        ),
+        'fullscreen' => Array(
+            'arguments' => Array('identity'=>'', 'element' => '', 'type' => UI_THEME_TYPE::NORMAL, 'title' => '', 'options'=>Array(), 'attributes' => Array()),
+            'file' => $path.'/theme_functions/fullscreen/fullscreen.inc'
+        ),
+        'xbutton' => Array(
+            'arguments' => Array('identity'=>null, 'behaviour' => null, 'attributes' => Array()),
+            'file' => $path.'/templates/xbutton/xbutton.inc',
+            'template' => 'templates/xbutton/xbutton'
+        ),
+        'telephone' => Array(
+            'arguments' => Array('prefix'=> '', 'number' => '', 'show_prefix' => false),
+            'file' => $path.'/theme_functions/telephone.inc'
+        ),
+        'user_block' => Array(
+            'arguments' => Array(),
+            'template' => 'templates/user_block/user_block',
+            'file' => $path.'/templates/user_block/user_block.inc',
+        )
+    );
+}
+
+/**
+ * Implements hook_block().
+ */
+function uiu_block($op = 'list', $delta = 0, $edit = array()){
+    switch($op){
+        case 'list':
+            return Array(
+                'uiu_login' => Array(
+                    'info' => 'User login',
+                    'cache' => BLOCK_NO_CACHE
+                ),
+                'user_buttons' => Array(
+                    'info' => 'The user buttons of the header',
+                    'region' => 'header',
+                    'cache' => BLOCK_NO_CACHE
+                ),
+                'user_block' => Array(
+                    'info' => 'The block that appears to the user popup.',
+                    'cache' => BLOCK_NO_CACHE
+                ),
+            ); 
+        case 'view':
+            switch($delta){
+                case 'uiu_login':
+                    return Array(
+                        'content' => uiu_login(),
+                    );
+                case 'user_buttons':
+                    return Array(
+                        'content' => uiu_user_buttons(),
+                    );
+                case 'user_block':
+                    return Array(
+                        'content' => theme('user_block')
+                    );
+            }
+    }
+}
+
+define('UIU_USER_PICTURE_SMALL_PRESET', 'user_image_preset');
+function uiu_get_user_picture_small(){
+    global $user;
+    if(is_null($user->picture_small)) {
+        $picture_path = strlen($user->picture) > 0 ? ltrim($user->picture,'/') : ltrim(variable_get('user_picture_default', ''),'/');
+        $user->picture_small = theme('imagecache', UIU_USER_PICTURE_SMALL_PRESET, $picture_path, $user->name, $user->name);
+    }
+    return $user->picture_small;
+}
+
+/**
+ * Implements hook_imagecache_default_presets().
+ */
+function uiu_imagecache_default_presets(){
+    return Array(
+        UIU_USER_PICTURE_SMALL_PRESET => Array(
+            'presetname' => UIU_USER_PICTURE_SMALL_PRESET,
+            'actions' => Array(
+                0 => Array(
+                    'weight' => '0',
+                    'module' => 'imagecache',
+                    'action' => 'imagecache_scale',
+                    'data' =>
+                        array (
+                            'height' => '75',
+                        ),
+                )
+            )
+        )
+    );
+}
+
+/**
+ * Implements hook_init().
+ *
+ * As we cannot add their respective theme_hook() we add them here.
+ */
+function uiu_init(){
+    if ($path = libraries_get_path('stickyjs')) {
+         drupal_add_js($path . '/jquery.sticky.js','core');
+    }
+    $p = drupal_get_path('module','uiu');
+    $ptf = $p.'/theme_functions';
+    drupal_add_js("$ptf/fullscreen/fullscreen.js",'module','footer');
+    drupal_add_js("$ptf/popup/Popup.js");
+    //drupal_add_css("$p/templates/box/Box.css.less");
+    drupal_add_css("$p/templates/box/Box.css.less");
+    drupal_add_css("$p/templates/sbutton/Sbutton.css.less");
+    drupal_add_css("$ptf/popup/Popup.css.less");
+    drupal_add_css("$ptf/fullscreen/Fullscreen.css.less");
+    drupal_add_css("$ptf/floating/Floating.css.less");
+    drupal_add_css("$p/templates/xbutton/Xbutton.css.less");
+    drupal_add_css($p . '/views/box_view/box_view.css', 'module');
+    drupal_add_css($p.'/templates/user_block/UserBlock.css.less');
+    drupal_add_css($p.'/blocks/login/uiuLogin.css.less');
+}
+
+/**
+ * See the description of this file to get info about this.
+ */
+function uiu_get_constants(){
+    global $theme;
+    static $constants;
+    if(is_null($constants)){
+        if(in_array($theme,Array('xsr3','reutilitza','deviceWare')))
+            $constants = drupal_parse_info_file(drupal_get_path('theme','xsr3').'/consts.info');
+        $constants['@normalColor'] = variable_get('normalColor','#bdc647');
+        $constants['@boldColor'] = variable_get('boldColor','#565193');
+        $constants['@emphasisColor'] = variable_get('emphasisColor','#171717');
+        $constants['@fontColor'] = variable_get('fontColor','#383737');
+        $constants['@active'] = variable_get('active','#565193');
+        $constants['@hover'] = variable_get('hover','#565193');
+        $constants['@backgroundColor'] = variable_get('backgroundColor','#F5F5F5');
+        $constants['@borderRadius'] =  variable_get('borderRadius','3');
+    }
+    return $constants;
+}
+
+/**
+ * Obtains the behaviour of a themed $vars and sets actions to HTML correspondingly.
+ *
+ * @see template_preprocess_sbutton to get info about how $vars is thought to be.
+ * @param $vars Array Themed bars with behaviour
+ */
+function uiu_get_behaviour(&$vars){
+    switch($vars['behaviour']['type']){
+        case 'link':
+            $vars['attributes']['href'] = $vars['behaviour']['link'];
+            $vars['tag'] = 'a';
+            break;
+        case 'function':
+            $vars['attributes']['data-function'] = $vars['behaviour']['name'];
+            $vars['attributes']['data-event'] = $vars['behaviour']['event'];
+            $vars['attributes']['data-object'] = $vars['behaviour']['object'];
+            break;
+        case 'event':
+            foreach($vars['behaviour']['event'] as $type => $js)
+                $vars['attributes'][$type] = $js;
+            break;
+    }
+}

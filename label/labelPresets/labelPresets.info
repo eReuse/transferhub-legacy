@@ -1,0 +1,5 @@
+name = Label Presets
+description = Let's an user have different presets, this is, ways to show a label, and personalize them
+package = Label
+core = 6.x
+dependencies[] = label

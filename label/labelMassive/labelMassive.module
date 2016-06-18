@@ -1,0 +1,60 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 05/03/2015
+ * Time: 11:56
+ *
+ * Lets users label a bunch of nodes at once. This can be extended offering labelPresets and labelPersonalize.
+ *
+ * The module is divided in 2:
+ * - REST HTML page that shows the labels.
+ * - A drupal operation that let's user select nodes and connects to the REST HTML page to show them. This ca be used
+ * by other modules as VBO as a graphic interface to select the nodes to label.
+ */
+
+define('LABEL_MASSIVE_URL','nodes/label');
+require_once 'operation.inc';
+
+/**
+ * Implementation of hook_menu()
+ */
+function labelMassive_menu(){
+    return Array(
+        LABEL_MASSIVE_URL => Array(
+            'title' => t('See, personalize and print labels'),
+            'access arguments' => Array(LABEL_LABEL_NODES), //No need for a special access rather than this one
+            'page callback' => 'labelMassive_label',
+            'type' => MENU_CALLBACK
+        ),
+    );
+}
+
+/**
+ * Shows the labels of the nodes whose id's have been passed in through REST.
+ * @return string HTML output.
+ * @throws Exception If the preset could
+ */
+function labelMassive_label(){
+    $path = drupal_get_path('module','labelMassive');
+    drupal_add_css($path.'/labelMassivePrint.css','module');
+    drupal_add_js($path.'/LabelMassivePrint.js');
+    drupal_add_js($path.'/html2canvas.js');
+    drupal_add_js($path.'/LabelsToPdf.js');
+    drupal_set_html_head('<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.1.135/jspdf.min.js"></script>');
+    global $user;
+    try {
+        $preset = labelPresets_getPreset($user->uid, $_GET['preset']);   //Default as minimum todo preset sanitized?
+        $output = module_exists('labelPersonalize')? labelPersonalize_get_template($preset,$user) : '';
+        $output .= theme('sbutton','labelMassive_print',t('Print the labels'),null,Array('type' => 'event','event'=>Array('onclick' => 'window.print()')));
+        $output .= '&nbsp;'.theme('sbutton','generate_pdf',t('Generate PDF').'&nbsp;<em>beta</em>',null,Array('type' => 'event','event'=>Array('onclick' => 'getLabelsInPdf()')));
+        $output .= '<article id="labels">';
+        foreach($_GET['nids'] as $nid)
+            $output .= theme('label',$nid,$preset['logo'],$preset['style'],$preset['size'],$preset['space'],labelPresets_getValuesFromNode($preset['lines'],node_load($nid))); //todo nid sanitized?
+        $output .= '</article>';
+        return $output;
+    } catch(Exception $e){
+        u_accesDenial('',400,'Bad request',$e->getMessage());
+    }
+}
+

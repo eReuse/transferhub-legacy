@@ -1,0 +1,43 @@
+#block-socialActionsVote-socialActionsVote_big{
+  @voter_width_big: 250px;
+  width: @voter_width_big;
+  position: relative;
+  .title{
+    position: absolute;
+    left: @voter_width_big + 50px;
+    border-bottom: none !important;
+  }
+  .title:before{
+    content:'\25C0';
+    margin-right: 0.5em;
+  }
+  #big_voter{
+    *{
+      width:@voter_width_big;
+      height:88px;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+    #facebook_voter{
+      background-image: url('img/facebook_voter.png');
+      &:hover{
+        background-image: url('img/facebook_voter_hover.png');
+      }
+    }
+    #website_voter{
+      background-image: url('img/website_voter.png');
+      &:hover{
+        background-image: url('img/website_voter_hover.png');
+      }
+    }
+  }
+}
+
+#block-socialActionsVote-socialActionsVote_big_view {
+  font-size: 200%;
+  margin-bottom: 1em;
+  .votes{
+    font-size: 175%;
+  }
+}
+

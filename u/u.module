@@ -1,0 +1,21 @@
+<?php
+/**
+ * To not have a cluttered module, it is divided in different files depending what the functions are doing.
+ */
+
+define("PRODUCTION_DOMAIN", 'reutilitza.cat');
+define('IPV6_SIZE',46);
+require_once 'blocks.inc';
+require_once 'others.inc';
+require_once 'webform.inc';
+//require_once 'user_login.inc';
+require_once 'legal.inc';
+require_once 'ajax_security.inc';
+require_once 'rest.inc';
+require_once 'db.inc';
+
+
+function u_init(){
+    drupal_add_js(drupal_get_path('module','u') . '/utils.js','core');
+}
+

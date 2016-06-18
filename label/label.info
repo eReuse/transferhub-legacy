@@ -1,0 +1,8 @@
+name = Label
+description = Shows and personalizes QR with the url of a node. This module needs library
+package = Label
+core = 6.x
+dependencies[] = uiu
+dependencies[] = u
+dependencies[] = less
+dependencies[] = libraries

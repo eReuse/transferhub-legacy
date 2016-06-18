@@ -1,0 +1,274 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Xavier
+ * Date: 05/04/2015
+ * Time: 22:09
+ */
+
+require_once 'dataLayer.inc';
+
+
+
+/**
+ * Implements hook_menu().
+ * todo http://zircote.com/swagger-php/annotations.html#resource
+ * @SWG\Resource(
+ *  apiVersion="0.1",
+ *  swaggerVersion="2",
+ *  resourcePath="/node/{node}/social",
+ *  basePath="http://www.reutilitza.cat"
+ * )
+ *
+ */
+function socialActions_menu(){
+    $items = Array(
+        'node/%iniciativa/social' => Array(
+            'page arguments' => Array(1),
+            'page callback' => 'socialActions_rest',
+            'access arguments' => array(1),
+            'access callback' => 'socialActions_rest_access',
+        ),
+    ) ;
+    foreach(socialActions_get_type_of_actions() as $groupType => $group){
+        foreach($group as $type)
+            if(!is_null($type['url'])) $items += _socialActions_get_action_menu_item($type['url'],$groupType);
+        $items += _socialActions_get_action_menu_item($groupType);
+    }
+    return $items;
+}
+
+function _socialActions_get_action_menu_item($action, $parent = ''){
+    $url_field =  $parent == ''? $action : $parent.'/'.$action;
+    $function_field = $parent == ''? $action : $parent; //We redirect all shares to share method, giving the type as a parameter (3)
+    return Array(
+        "node/%iniciativa/social/$url_field" => Array(
+            'title' => "SocialActionsVote REST gateway to act with the $parent $action of a node.",
+            'page arguments' => Array(1,3),
+            'page callback' => "socialActions_rest_$function_field",
+            'access callback' => "socialActions_rest_access",
+        ),
+    );
+}
+
+function socialActions_rest_access($project){
+    return true;
+    //return u_ajax_check_unique_token(XSR_SOCIAL_ACTIONS_AJAX_INICIATIVA_ACTION_TOKEN,$_POST['token']);    //If the token is validated
+}
+
+function socialActions_rest($node){
+    switch(u_get_request_method()){
+        case U_GET:
+            u_correct_json(xsr_social_actions_get_social_actions($node->nid)); break;
+        default: u_set_status_code(405); module_invoke_all('exit'); exit;
+    }
+}
+
+define('SOCIAL_ACTIONS_FB_ID', 'facebook_id');
+
+/**
+ * REST gateway for votes.
+ * node/%node/social/vote
+ * @SWG\Api(
+ *      path="/node/{node}/social/vote",
+ *      description="Operations with the votes of a node",
+ *      @SWG\Operation(
+ *          method="GET",
+ *          summary="Gets processed results about the votes of the node.",
+ *          "nickname":"getProcessedResultsOfNode",
+ *          @SWG\Parameter(
+ *              name="has_user_voted",
+ *              description="If this value is present, returns a boolean indicating if actual user (if not anonymous) has voted in this node, or param fb_id",
+ *              paramType="query",
+ *              required=false,
+ *              allowMultiple=false,
+ *              type="bool"
+ *          )
+ *          @SWG\Parameter(
+ *              name="fb_id",
+ *              description="When has_user_voted is true, this parameter is used to search.",
+ *              paramType="query",
+ *              required=false,
+ *              allowMultiple=false,
+ *              type="bool"
+ *          )
+ *      )
+ * )
+ *
+ *
+ * @param $node
+ * @param null $uuid
+ */
+function socialActions_rest_vote($node, $param){
+   // if($param == 'vote'){ //We are in %node/social/vote
+    global $user;
+    $uid = $user->uid == 0? null : $user->uid;
+        switch(u_get_request_method()){
+            case U_GET:
+                $facebook_id = $_GET[SOCIAL_ACTIONS_FB_ID] == 'null'? null : $_GET[SOCIAL_ACTIONS_FB_ID];
+                if($_GET['has_user_voted']){
+                    /*$a = Array(
+                        'uuid' => socialActions_get_uuid($uid, $facebook_id),
+                        'has_voted?' => socialActions_has_user_voted(socialActions_get_uuid($uid, $facebook_id), $node->nid),
+                        'boolval' =>boolval(socialActions_has_user_voted(socialActions_get_uuid($uid, $facebook_id), $node->nid)),
+                        'fb' => $facebook_id,
+                        'uid' => $uid,
+                        'nid' => $node->nid
+                    );
+                    u_correct_json($a);*/
+                    u_correct_json(boolval(socialActions_has_user_voted(socialActions_get_uuid(null, $facebook_id), $node->nid)));
+                }
+                else u_correct_json(socialActions_get($node->nid)); break;
+            case U_POST:
+                $facebook_id = $_POST[SOCIAL_ACTIONS_FB_ID] == 'null'? null : $_POST[SOCIAL_ACTIONS_FB_ID];
+                _socialActions_rest_generic_post($node,SOCIALACTIONS_VOTE, $facebook_id); break;
+            default: u_set_status_code_and_exit(405);
+        }
+ /*   } else {    //We are in %node/social/vote/%uuid , $param == %uuid
+        switch(u_get_request_method()){
+            case U_PUT:
+                $values = u_get_input_values();
+                if(socialActions_is_user_type($values['user_type'])) {
+                    if (!socialActions_set_user_type($node->nid, $param, $values['user_type'])) {
+                        u_set_status_code(400);
+                        u_correct_json(u_add_rest_error(4003, db_error()));
+                    }
+                    u_set_status_code_and_exit(200);
+                } else {
+                    u_set_status_code(400);
+                    u_correct_json(u_add_rest_error(6001,$values['user_type'].' is not a social user type.'));
+                } break;
+            case U_GET:
+        }
+        u_correct_json(func_get_args());
+        if(u_get_request_method() == U_PUT){
+
+        } else u_set_status_code_and_exit(418);
+    }*/
+}
+
+function socialActions_rest_share($project,$social_network = null){
+    u_set_status_code_and_exit(405);
+}
+
+/**
+ * Implementation of hook_load().
+ * Gets the <b>uuid</b> for a given project and implicit logged in user or fb_id resource identifier.
+ *
+ * At the end this checks too if user has already used fb_id or uid to cast an action. So, checks if has casted an
+ * action before.
+ *
+ * @param $uuid int
+ * @return bool|int
+ *
+ * If 'false' this return will used by drupal to cast a NOT FOUND HTTP error code.
+ */
+function uuid_load($uuid){
+    global $user;
+    //todo
+    return socialActions_get_uuid($user->uid == 0? null : $user->uid,$fb_id);
+}
+
+
+/**
+ * Checks if the type exists
+ * @param $type
+ * @return bool
+ */
+function socialActions_type_exists($type){
+    $types = Array();
+    foreach(socialActions_get_type_of_actions() as $array) $types = array_merge($types,$array); //todo sure ok?
+    return in_array($type,array_keys($types));
+}
+
+/**
+ * Gets all the types
+ * @return array
+ */
+define('SOCIALACTIONS_VOTE', 0);
+function socialActions_get_type_of_actions(){
+    return Array(
+          'vote' => Array(
+              SOCIALACTIONS_VOTE => Array(
+                  'title' => t('Vote'),
+                  'machine name' => 'vote',
+                  'url' => null,
+              ),
+              1 => Array(
+                  'title' => t('Type of voter'),
+                  'machine name' => 'user_type',
+                  'url' => '%uuid',
+                  'types' =>  Array(1 => t(''), 2 => t(''), 3 => t(''))
+              ),
+          ),
+          'share' => Array(
+              10 => Array(
+                'title' => t('Share in Facebook'),
+                'machine name' => 'facebook',
+                  'url' => 'facebook'
+              ),
+              11 => Array(
+                  'title' => t('Share in Twitter'),
+                  'machine name' => 'twitter',
+                  'url' => 'twitter'
+              ),
+              12 => Array(
+                  'title' => t('Share in Linkedin'),
+                  'machine name' => 'linkedin',
+                  'url' => 'linkedin'
+              ),
+              13 => Array(
+                  'title' => t('Share in Google+'),
+                  'machine name' => 'g+',
+                  'url' => 'g+'
+              ),
+          ),
+          'support' => Array(
+              20 => Array(
+                  'title' => t('Like in Facebook'),
+                  'machine name' => 'facebook',
+                  'url' => 'facebook'
+              ),
+              21 => Array(
+                  'title' => t('Like in Twitter'),
+                  'machine name' => 'twitter',
+                  'url' => 'twitter'
+              ),
+              22 => Array(
+                  'title' => t('Like in Linkedin'),
+                  'machine name' => 'linkedin',
+                  'url' => 'linkedin'
+              ),
+              23 => Array(
+                  'title' => t('Like in Google+'),
+                  'machine name' => 'g+',
+                  'url' => 'g+'
+              ),
+          )
+    );
+}
+
+function socialActions_is_user_type($type){
+    $groups = socialActions_get_type_of_actions();
+    return in_array($type,$groups['vote'][1]['types']);
+}
+
+function _socialActions_rest_generic_post($node,$type, $facebook_id){
+    global $user;
+    $uid = $user->uid == 0? null : $user->uid;
+    if(!is_null($facebook_id) || user_is_logged_in()){
+        try {
+            if (!socialActions_set($node->nid, null, $facebook_id, $type)) {
+                u_set_status_code(409); //Conflict
+                u_correct_json(u_add_rest_error(4002, ''));
+            }
+        }
+        catch (DrupalAndFacebookMismatch $d){
+            u_set_status_code(403);
+            u_correct_json(u_add_rest_error(4001));
+        }
+        catch(Error $e){
+            u_set_status_code_and_exit(500);
+        }
+    } else u_set_status_code(400);
+}

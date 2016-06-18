@@ -1,0 +1,28 @@
+<?php
+/**
+ * To not have a cluttered module, it is divided in different files depending what the functions are doing.
+ */
+
+function fe_elements(){
+    return Array(
+        'fe_range' => Array(
+            '#input' => true,
+            //'#process' => Array('xsr_number_process'),
+            //'#element_validate' => Array('xsr_number_field_validate'),
+            //'#after_build' => Array('xsr_number_ab'),
+            '#theme' => Array('fe_range'),
+            '#min' => null,
+            '#max' => null,
+            '#step' => 1,
+        )
+    );
+}
+
+function fe_theme($existing, $type, $theme, $path){
+    return Array(
+        'fe_range' => Array(
+            'arguments' => Array('element' => null),
+            'file' => $path.'/templates/range.inc',
+        )
+    );
+}

@@ -1,0 +1,40 @@
+.box{
+  border-radius: 3px;
+  font-weight: lighter;
+  margin-left: 45px;
+  margin-right: 45px;
+  padding: 1em 2em 2em 2em;
+}
+
+.box h1, .box h2, .box h3, .box h4, .box h5, .box h6{
+  margin: 0;
+}
+
+.box.normal{
+  background-color: @normalColor;
+  color: @black;
+}
+
+.box.bold{
+  background-color: @boldColor;
+  color: @white;
+}
+
+a.box{
+    display: inline-block;
+}
+
+.box.bold h2, .box.bold h3,.box.bold h4,.box.bold h5,.box.bold h6{
+  border-color: rgb(255,255,255) !important;
+}
+
+.box.emphasis{
+  background-color: @emphasisColor;
+  color: @white;
+
+
+}
+
+ .box.emphasis h2, .box.emphasis h3, .box.emphasis h4, .box.emphasis h5, .box.emphasis h6{
+  border-color: rgb(255,255,255) !important;
+}

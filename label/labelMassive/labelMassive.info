@@ -1,0 +1,5 @@
+name = Label Massive
+description = Label lots of nodes with an operation. Useful in VBO.
+package = Label
+core = 6.x
+dependencies[] = label

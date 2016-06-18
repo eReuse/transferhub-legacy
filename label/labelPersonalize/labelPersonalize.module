@@ -1,0 +1,112 @@
+<?php
+
+define('LABEL_PERSONALIZE_EXAMPLE_NID', 2719);
+define('LABEL_PERSONALIZE_PERSONALIZE', 'personalize labels');
+
+/**
+ * Gets the template given a preset.
+ * @param $preset Array Preset array
+ * @param null|User $account If not null it will be checked user permission
+ * @return string HTML Template. As side effect, this method loads javascript.
+ */
+function labelPersonalize_get_template($preset, $account = null){
+    if(!is_null($account) && !user_access(LABEL_PERSONALIZE_PERSONALIZE,$account)) return '';
+    $path = drupal_get_path('module','labelPersonalize');
+    drupal_add_js("$path/labelPersonalizeMaster.js");
+    drupal_add_js("$path/labelPersonalizeLabel.js");
+    drupal_add_js("$path/LabelPersonalizeRange.js");
+    drupal_add_js("$path/labelPersonalizeInit.js");
+
+    $children = _labelPersonalize_generate_range($preset);
+    $children .= theme('file',Array('#parents'=> Array(), '#title' => t('Logo'), '#name' => 'name', '#attributes' => Array('id' => 'logo_upload','accept'=>'image/*'), '#description' => t('Select a logo to upload.')));
+    $children .= theme('checkbox',Array('#parents'=> Array(), '#title' => t('Add a border to cut'), '#value' => false, '#id' => 'toggle_border'));
+    $children .= theme('label',LABEL_PERSONALIZE_EXAMPLE_NID,$preset['logo'],$preset['style'],$preset['size'],$preset['space'],labelPersonalize_get_input_lines($preset['lines']));
+   // if(module_exists('labelPresets') && user_access(LABEL_PRESETS_USE_PRESETS))
+     //   $children .= labelPersets_new_preset_form();
+    $element = Array(
+        '#title' => t('Personalize your labels'),
+        '#attributes' => Array('id' => 'labelPersonalize'),
+        '#description' => t('Play with the values and make the label fit your needs. Once you like them, press "Print".'),
+        '#children' => $children,
+        '#collapsible' => true,
+        '#collapsed' => false
+    );
+    return theme('form',Array('#children' => theme('fieldset',$element)));
+}
+
+function _labelPersonalize_generate_range($preset){
+    $ranges = labelPersonalize_get_ranges();
+    $range_names = labelPersonalize_get_range_names();
+    $output = '';
+    foreach(($preset['space'] + $preset['size']) as $name => $value){
+        $element = Array(
+            '#title' => $range_names[$name],
+            '#value' => $value,
+            '#parents'=> Array(),   //So form_get_error doesn't arise a warning
+            '#id' => $name,
+        );
+        $element += $ranges[$name];
+        $output .= theme('fe_range',$element);
+    }
+    return $output;
+}
+
+function labelPersonalize_get_ranges(){
+    return Array(
+      'horizontal' => Array(
+            '#min' => -2,
+            '#max' => 15,
+            '#step' => 1
+      ),
+        'vertical' => Array(
+            '#min' => -2,
+            '#max' => 15,
+            '#step' => 1
+        ),
+        'width' => Array(
+            '#min' => 72,
+            '#max' => 120,
+            '#step' => 1
+        ),
+        'height' => Array(
+            '#min' => 47,
+            '#max' => 65,
+            '#step' => 1
+        ),
+    );
+}
+
+function labelPersonalize_get_range_names(){
+    return Array(
+        'horizontal' => t('Horizontal spacing'),
+        'vertical' => t('Vertical spacing'),
+        'width' => t('Width of the label'),
+        'height' => t('Height of the label')
+    );
+}
+
+function labelPersonalize_perm(){
+    return Array(
+        LABEL_PERSONALIZE_PERSONALIZE,
+    );
+}
+
+function labelPersonalize_get_input_lines($preset_lines){
+    $lines = Array();
+    $element = Array(
+        '#multiple' => false,
+        '#options' => label_get_line_fields(),
+    );
+    foreach($preset_lines as $field_name => $line){
+        $element['#value'] = $field_name;
+        $lines[$field_name] = Array(
+            'title' =>  "<input name='text' value='{$line['title']}' size='5'>",
+            'value' => "<select>" . form_select_options($element) . "</select>",
+            'position' => $line['position'],
+            'set_in_attr' => false,
+            'visible' => true
+        );
+    }
+    return $lines;
+}
+
